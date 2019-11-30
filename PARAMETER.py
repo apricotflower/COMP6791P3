@@ -1,0 +1,22 @@
+
+BLOCK_SIZE = 500
+FINAL_TERMS_SIZE = 25000
+
+RAW_PATH = "www.concordia.ca"
+
+PATH = "INDEXS/"
+DATA_PATH = PATH + "DATA/"
+DICT_PATH = PATH + "DICT/"
+DATA = DATA_PATH + "ConcordiaAI"
+DICT = DICT_PATH + "ConcordiaAI_dict_check"
+
+BLOCK_PATH = PATH + "DISK/"
+MERGE_BLOCK_PATH = PATH + "MERGE_BLOCK_INDEX/"
+
+QUERY_AND = "and"
+QUERY_OR = "or"
+QUERY_SINGLE = "single"
+QUERY_BM25 = "bm25"
+QUERY_TFIDF = "tfidf"
+
+EXIT = "exit"
