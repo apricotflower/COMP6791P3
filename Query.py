@@ -166,7 +166,7 @@ def compute_RSVd(document, query_list,k1,b):
 def compute_l_avc(n):
     """ compute Lave """
     sum = 0
-    fo = open("tokens_number.txt", 'r',encoding='utf8')
+    fo = open(PARAMETER.TOKEN_NUMBER_CONCORDIA, 'r',encoding='utf8')
     line = fo.readline()
     while line:
         newid,token_number = line.split(":")
@@ -203,7 +203,10 @@ def bm25_query(query_list):
     print(str(len(sorted_RSVd)) + " documents were ranked.")
     for doc in sorted_RSVd:
         # print("doc_id: " + str(doc[0]) + " rank_val: " + str(doc[1]))
-        print("doc_id: " + str(doc[0]) + " rank_val: " + str(doc[1]) + "\n" + "url: " + str(dict_check[str(doc[0])]))
+        try:
+            print("doc_id: " + str(doc[0]) + " rank_val: " + str(doc[1]) + "\n" + "url: " + str(dict_check[str(doc[0])].decode('utf8', "ignore")))
+        except AttributeError:
+            print("doc_id: " + str(doc[0]) + " rank_val: " + str(doc[1]) + "\n" + "url: " + str(dict_check[str(doc[0])]))
 
 
 def compute_tfidf(document,query_list):
@@ -233,7 +236,7 @@ def tf_idf_query(query_list):
     print("Do you want to use AIindex df ? Yes input 1 , No input 0")
     use_ai_df = input()
 
-    while use_ai_df != "1" or use_ai_df != "0":
+    while use_ai_df != "1" and use_ai_df != "0":
         print("Do you want to use AIindex df ? Yes input 1 , No input 0")
         use_ai_df = input()
 
@@ -319,7 +322,7 @@ def prepare_bm25_para():
     global n
     global l_avc
     count = -1
-    for count,line in enumerate(open('tokens_number.txt')): pass
+    for count,line in enumerate(open(PARAMETER.TOKEN_NUMBER_CONCORDIA)): pass
     n = count+1
     l_avc = compute_l_avc(n)
 
@@ -328,14 +331,14 @@ def find_url():
     global dict_check
     dict_check = {}
     for file in os.listdir(PARAMETER.DICT_PATH):
-        fo = open(PARAMETER.DICT_PATH + file)
+        fo = open(PARAMETER.DICT_PATH + file,encoding='utf8')
         dict_check.update(json.load(fo))
 
 
 def find_tokens_number(find_newid):
     """ find l_d """
     answer = None
-    fo = open("tokens_number.txt", 'r',encoding='utf8')
+    fo = open(PARAMETER.TOKEN_NUMBER_CONCORDIA, 'r',encoding='utf8')
     line = fo.readline()
     while line:
         newid,token_number = line.split(":")

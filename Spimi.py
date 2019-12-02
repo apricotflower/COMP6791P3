@@ -134,17 +134,19 @@ def start_spimi(website,block_index, merge_block):
     global deal_all_document
     # fo = open(PARAMETER.DATA)
     # deal_all_document = json.load(fo)
+    if not os.path.exists(PARAMETER.TOKEN_NUMBER_PATH):
+        os.makedirs(PARAMETER.TOKEN_NUMBER_PATH)
     deal_all_document ={}
     if website == PARAMETER.WEBSITE_CONCORDIA:
         for file in os.listdir(PARAMETER.DATA_PATH):
             fo = open(PARAMETER.DATA_PATH + file)
             deal_all_document.update(json.load(fo))
-        fo2 = open('tokens_number.txt', 'w')
+        fo2 = open(PARAMETER.TOKEN_NUMBER_CONCORDIA, 'w')
     elif website == PARAMETER.WEBSITE_AI:
         for file in os.listdir(PARAMETER.DATA_PATH_AI):
             fo = open(PARAMETER.DATA_PATH_AI + file)
             deal_all_document.update(json.load(fo))
-        fo2 = open('tokens_number_ai.txt', 'w')
+        fo2 = open(PARAMETER.TOKEN_NUMBER_AI, 'w')
 
 
     i = 1

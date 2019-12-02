@@ -3,14 +3,17 @@ import compression
 import os
 import PARAMETER
 import json
+from nltk.corpus import words
 
 index_num = 0
 url_dict = dict()
 contentDict = dict()
+english_words = words.words()
 
 
 def create_dict(fileName):
     global index_num
+    global english_words
     try:
         content = ""
         # fileName = r'C:\Users\liang\Desktop\www.concordia.ca\ginacody\research\ai.html'
