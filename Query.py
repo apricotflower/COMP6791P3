@@ -9,6 +9,7 @@ import json
 
 search_dict = dict()
 dict_check = dict()
+use_ai_df = 0
 
 
 def check_and_query(query_list, result):
@@ -125,8 +126,22 @@ def multiple_query(query_list, operator):
     return result
 
 
+def find_ai_df(t):
+    dft = -1
+    fo = open(PARAMETER.AI_DF, 'r', encoding='utf8')
+    line = fo.readline()
+    while line:
+        term, ai_df = line.split(":")
+        if str(term) == str(t):
+            # print("Find " + str(t) + " in AIindex !")
+            dft = float(ai_df)
+        line = fo.readline()
+    return dft
+
+
 def compute_RSVd(document, query_list,k1,b):
     """ compute RSVd of one document """
+    global use_ai_df
     l_d = int(find_tokens_number(document))
     temp = 0
     for t in query_list:
@@ -134,7 +149,14 @@ def compute_RSVd(document, query_list,k1,b):
         for newid_pair in search_dict[t]:
             if str(newid_pair[0]) == str(document):
                 tftd = newid_pair[1]
-        dft = len(search_dict[t])
+
+        if use_ai_df == "0":
+            dft = len(search_dict[t])
+        elif use_ai_df == "1":
+            dft = find_ai_df(t)
+
+        if dft == -1:
+            dft = len(search_dict[t])
 
         temp = temp+((math.log((n/dft), 10))*(((k1+1)*tftd)/(k1*((1-b)+b*(l_d/l_avc))+tftd)))
     RSVd = temp
@@ -155,7 +177,16 @@ def compute_l_avc(n):
 
 def bm25_query(query_list):
     global dict_check
+    global use_ai_df
     """ bm25 query sort, recommend use k1 = 1.2(>0) and b = 0.75 (0=<b=<1) """
+
+    print("Do you want to use AIindex df ? Yes input 1 , No input 0")
+    use_ai_df = input()
+
+    while use_ai_df != "1" and use_ai_df != "0":
+        print("Do you want to use AIindex df ? Yes input 1 , No input 0")
+        use_ai_df = input()
+
     print("Input k1: ")
     k1=float(input())
     print("Input b: ")
@@ -176,19 +207,36 @@ def bm25_query(query_list):
 
 
 def compute_tfidf(document,query_list):
+    global use_ai_df
     temp = 0
     for t in query_list:
         tftd = 0
         for newid_pair in search_dict[t]:
             if str(newid_pair[0]) == str(document):
                 tftd = newid_pair[1]
-        dft = len(search_dict[t])
-        temp =  temp + math.log((n / dft), 10)*tftd
+
+        if use_ai_df == "0":
+            dft = len(search_dict[t])
+        elif use_ai_df == "1":
+            dft = find_ai_df(t)
+
+        if dft == -1:
+            dft = len(search_dict[t])
+
+        temp = temp + math.log((n / dft), 10)*tftd
     return temp
 
 
 def tf_idf_query(query_list):
     global dict_check
+
+    print("Do you want to use AIindex df ? Yes input 1 , No input 0")
+    use_ai_df = input()
+
+    while use_ai_df != "1" or use_ai_df != "0":
+        print("Do you want to use AIindex df ? Yes input 1 , No input 0")
+        use_ai_df = input()
+
     documents = multiple_query(query_list, PARAMETER.QUERY_OR)
     copy_doc = copy.deepcopy(documents)
     for (i,v) in enumerate(copy_doc):
@@ -239,7 +287,7 @@ def deal_with_query(query):
 
 def get_search_dict(query_list):
     print("Getting ……")
-    search_index = PARAMETER.MERGE_BLOCK_PATH
+    search_index = PARAMETER.MERGE_BLOCK_PATH_CONCORDIA
     global search_dict
     search_dict = {}
     try:
@@ -282,8 +330,6 @@ def find_url():
     for file in os.listdir(PARAMETER.DICT_PATH):
         fo = open(PARAMETER.DICT_PATH + file)
         dict_check.update(json.load(fo))
-
-
 
 
 def find_tokens_number(find_newid):

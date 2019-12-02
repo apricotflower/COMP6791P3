@@ -111,26 +111,51 @@ def merge_spimi(block_index,merge_block):
                 remain_block_number = remain_block_number - 1
 
 
-def start_spimi(block_index, merge_block):
+def generate_ai_df_index():
+    search_index = PARAMETER.MERGE_BLOCK_PATH_AI
+    outfile = open(PARAMETER.AI_DF, "a+", encoding='utf8')
+    try:
+        if not os.listdir(search_index):
+            print("The index for dictionary is empty, please generate it first! ")
+            os._exit(0)
+    except FileNotFoundError:
+        print("The index for dictionary is empty, please generate it first! ")
+        os._exit(0)
+    for file in os.listdir(search_index):
+        fo = open(search_index + file, encoding='utf8')
+        line = fo.readline()
+        while line:
+            line_term, posting = line.rsplit(":", 1)
+            outfile.write(str(line_term) + ":" + str(len(ast.literal_eval(posting))) + "\n")
+            line = fo.readline()
+
+
+def start_spimi(website,block_index, merge_block):
     global deal_all_document
     # fo = open(PARAMETER.DATA)
     # deal_all_document = json.load(fo)
     deal_all_document ={}
-    for file in os.listdir(PARAMETER.DATA_PATH):
-        fo = open(PARAMETER.DATA_PATH + file)
-        deal_all_document.update(json.load(fo))
+    if website == PARAMETER.WEBSITE_CONCORDIA:
+        for file in os.listdir(PARAMETER.DATA_PATH):
+            fo = open(PARAMETER.DATA_PATH + file)
+            deal_all_document.update(json.load(fo))
+        fo2 = open('tokens_number.txt', 'w')
+    elif website == PARAMETER.WEBSITE_AI:
+        for file in os.listdir(PARAMETER.DATA_PATH_AI):
+            fo = open(PARAMETER.DATA_PATH_AI + file)
+            deal_all_document.update(json.load(fo))
+        fo2 = open('tokens_number_ai.txt', 'w')
 
 
-    fo = open('tokens_number.txt', 'w')
     i = 1
     len_d = len(deal_all_document.items())
     # document_token_number = {}
     for (key,value) in deal_all_document.items():
         # document_token_number[key] = len(value)
         if len_d == i:
-            fo.write(key+":"+ str(len(value)))
+            fo2.write(key+":"+ str(len(value)))
         else:
-            fo.write(key + ":" + str(len(value)) + "\n")
+            fo2.write(key + ":" + str(len(value)) + "\n")
         i = i + 1
     # json.dump(document_token_number, fo)
 
@@ -143,5 +168,9 @@ def start_spimi(block_index, merge_block):
     spimi_invert(block_index)
     merge_spimi(block_index,merge_block)
 
+    if website == PARAMETER.WEBSITE_AI:
+        generate_ai_df_index()
+
+
 if __name__ == '__main__':
-    start_spimi(PARAMETER.BLOCK_PATH, PARAMETER.MERGE_BLOCK_PATH)
+    start_spimi(PARAMETER.WEBSITE_CONCORDIA,PARAMETER.BLOCK_PATH_CONCORDIA, PARAMETER.MERGE_BLOCK_PATH_CONCORDIA)
