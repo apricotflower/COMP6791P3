@@ -6,9 +6,12 @@ import re
 import math
 import copy
 import json
+from urllib import request
+from bs4 import BeautifulSoup
 
 search_dict = dict()
 dict_check = dict()
+df_ai = dict()
 use_ai_df = 0
 
 
@@ -128,14 +131,21 @@ def multiple_query(query_list, operator):
 
 def find_ai_df(t):
     dft = -1
-    fo = open(PARAMETER.AI_DF, 'r', encoding='utf8')
-    line = fo.readline()
-    while line:
-        term, ai_df = line.split(":")
-        if str(term) == str(t):
-            # print("Find " + str(t) + " in AIindex !")
-            dft = float(ai_df)
+    global df_ai
+    if df_ai == {}:
+        fo = open(PARAMETER.AI_DF, 'r', encoding='utf8')
         line = fo.readline()
+        while line:
+            term, ai_df = line.split(":")
+            if str(term) == str(t):
+                # print("Find " + str(t) + " in AIindex !")
+                dft = float(ai_df)
+            line = fo.readline()
+    else:
+        try:
+            dft = df_ai[t]
+        except KeyError:
+            pass
     return dft
 
 
@@ -201,12 +211,62 @@ def bm25_query(query_list):
         documents_RSVd[d] = compute_RSVd(str(d), query_list,k1,b)
     sorted_RSVd = sorted(documents_RSVd.items(), key=lambda x: x[1], reverse=True)
     print(str(len(sorted_RSVd)) + " documents were ranked.")
+    ans_url_list = []
+    counter = 0
     for doc in sorted_RSVd:
         # print("doc_id: " + str(doc[0]) + " rank_val: " + str(doc[1]))
-        try:
-            print("doc_id: " + str(doc[0]) + " rank_val: " + str(doc[1]) + "\n" + "url: " + str(dict_check[str(doc[0])].decode('utf8', "ignore")))
-        except AttributeError:
-            print("doc_id: " + str(doc[0]) + " rank_val: " + str(doc[1]) + "\n" + "url: " + str(dict_check[str(doc[0])]))
+        ans_url = str(dict_check[str(doc[0])].split(".html")[0] + ".html")
+        ans_url_list.append(ans_url)
+        print("TOP: " + str(counter))
+        print("doc_id: " + str(doc[0]) + " rank_val: " + str(doc[1]) + "\n" + "url: " + ans_url)
+        counter = counter + 1
+
+    print("Do you want to try to find the exact answer automatically? Input 1 for yes 0 for No ")
+    check_e = input()
+    if check_e == "1":
+        check_exact_answer(query_list, ans_url_list)
+
+
+def get_url_content(url):
+    # print(url)
+    content = ""
+    try:
+        text = request.urlopen(url)
+        soup = BeautifulSoup(text, "html.parser")
+        soup_tags = [soup.div, soup.span, soup.p, soup.a, soup.h1, soup.h2, soup.h3, soup.h4, soup.h5, soup.h6, soup.li]
+        for soup_tag in soup_tags:
+            if soup_tag:
+                content = content + soup_tag.text.strip() + " "
+    except BaseException:
+        # print("Error in page! ")
+        pass
+    return content
+
+
+def find_exact_ans_helper(file_list, content):
+    exact_ans_list = []
+    fo = open(file_list, 'r', encoding='utf8')
+    line = fo.readline()
+    while line:
+        if line.lower().strip("\n") in content.lower():
+            exact_ans_list.append(line)
+        line = fo.readline()
+    print("Print exact answers are: ")
+    for exact_a in exact_ans_list:
+        print(str(exact_a).strip("\n"))
+
+
+def check_exact_answer(query_list, ans_url):
+    content = ""
+    for i in range(0, 10):
+        content = content + get_url_content(ans_url[i])
+    for term in query_list:
+        if term.lower() in PARAMETER.DEPARTMENT:
+            find_exact_ans_helper(PARAMETER.DEPARTMENT_LIST, content)
+        if term.lower() in PARAMETER.RESEARCHER:
+            find_exact_ans_helper(PARAMETER.RESEARCHER_LIST, content)
+        if term.lower() in PARAMETER.CONDUCT:
+            find_exact_ans_helper(PARAMETER.CONDUCT_LIST, content)
 
 
 def compute_tfidf(document,query_list):
@@ -232,6 +292,7 @@ def compute_tfidf(document,query_list):
 
 def tf_idf_query(query_list):
     global dict_check
+    global use_ai_df
 
     print("Do you want to use AIindex df ? Yes input 1 , No input 0")
     use_ai_df = input()
@@ -249,8 +310,19 @@ def tf_idf_query(query_list):
         documents_tfidf[d] = compute_tfidf(str(d), query_list)
     sorted_tfidf = sorted(documents_tfidf.items(), key=lambda x: x[1], reverse=True)
     print(str(len(sorted_tfidf)) + " documents were ranked.")
+    ans_url_list = []
+    counter = 0
     for doc in sorted_tfidf:
-        print("doc_id: " + str(doc[0]) + " rank_val: " + str(doc[1]) + "\n" + "url: " + str(dict_check[str(doc[0])]))
+        url = str(dict_check[str(doc[0])].split(".html")[0]+ ".html")
+        ans_url_list.append(url)
+        print("TOP: " + str(counter))
+        print("doc_id: " + str(doc[0]) + " rank_val: " + str(doc[1]) + "\n" + "url: " + url)
+        counter = counter + 1
+
+    print("Do you want to try to find the exact answer automatically? Input 1 for yes 0 for No ")
+    check_e = input()
+    if check_e == "1":
+        check_exact_answer(query_list, ans_url_list)
 
 
 def deal_with_query(query):
@@ -348,7 +420,49 @@ def find_tokens_number(find_newid):
     return answer
 
 
+def load():
+    print("Getting ……")
+    search_index = PARAMETER.MERGE_BLOCK_PATH_CONCORDIA
+    global search_dict
+    search_dict = {}
+    try:
+        if not os.listdir(search_index):
+            print("The index for dictionary is empty, please generate it first! ")
+            os._exit(0)
+    except FileNotFoundError:
+        print("The index for dictionary is empty, please generate it first! ")
+        os._exit(0)
+    try:
+        for file in os.listdir(search_index):
+            fo = open(search_index + file, encoding='utf8')
+            line = fo.readline()
+            while line:
+                line_term, posting = line.rsplit(":", 1)
+                search_dict[line_term] = ast.literal_eval(posting)
+                line = fo.readline()
+    except BaseException:
+        print("The file is too big to load into memory, now change to a model which can save memory……")
+        pass
+
+    global df_ai
+    df_ai = {}
+    try:
+        fo = open(PARAMETER.AI_DF, 'r', encoding='utf8')
+        line = fo.readline()
+        while line:
+            term, ai_df = line.split(":")
+            df_ai[term] = float(ai_df)
+            line = fo.readline()
+    except BaseException:
+        print("The file is too big to load into memory, now change to a model which can save memory……")
+        pass
+
+    # print(search_dict)
+
+
 def start_query():
+    global search_dict
+    load()
     find_url()
     print("**"*40)
     print("Please input query: ")
@@ -356,7 +470,8 @@ def start_query():
     while query.lower() != PARAMETER.EXIT:
         try:
             query_list, operator = deal_with_query(query)
-            get_search_dict(query_list)
+            if search_dict == {}:
+                get_search_dict(query_list)
             prepare_bm25_para()
         except IndexError:
             print("Wrong query format! Input again!")
@@ -370,7 +485,7 @@ def start_query():
                 result[i] = v[0]
             print(str(len(result)) + " documents were found." + "Total result: " + str(result))
             for index in result:
-                print(dict_check[str(index)])
+                print(dict_check[str(index)].split(".html")[0]+ ".html")
             if operator == PARAMETER.QUERY_AND:
                 check_and_query(query_list, result)
             elif operator == PARAMETER.QUERY_OR:
@@ -382,6 +497,7 @@ def start_query():
         else:
             print("Operator wrong! Input again!")
         print("**" * 40)
+        search_dict = {}
         query = input().lower().strip()
 
     os._exit(0)

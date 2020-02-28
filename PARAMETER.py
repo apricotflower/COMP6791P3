@@ -43,4 +43,13 @@ QUERY_SINGLE = "single"
 QUERY_BM25 = "bm25"
 QUERY_TFIDF = "tfidf"
 
+
+DEPARTMENT = "departments"
+RESEARCHER = "name"
+CONDUCT = "research"
+
+DEPARTMENT_LIST = "LIST/departments.txt"
+RESEARCHER_LIST = "LIST/researchers.txt"
+CONDUCT_LIST = "LIST/conduct.txt"
+
 EXIT = "exit"

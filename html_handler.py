@@ -8,15 +8,12 @@ from nltk.corpus import words
 index_num = 0
 url_dict = dict()
 contentDict = dict()
-english_words = words.words()
 
 
 def create_dict(fileName):
     global index_num
-    global english_words
+    content = ""
     try:
-        content = ""
-        # fileName = r'C:\Users\liang\Desktop\www.concordia.ca\ginacody\research\ai.html'
         fo = open(fileName, 'r', encoding='utf-8',errors="ignore")
         text = fo.read()
         soup = BeautifulSoup(text, "html.parser")
@@ -24,19 +21,15 @@ def create_dict(fileName):
         for soup_tag in soup_tags:
             if soup_tag:
                 content = content + soup_tag.text.strip() + " "
-                # print(soup_tag.text.strip())
     except BaseException:
         print("Error in open Html file")
         pass
 
     if content:
         content = compression.compression(content)
-        # print(content)
         index_num = index_num + 1
         url = "https://" + fileName.replace("\\","/")
-        # print(url)
         url_dict[index_num] = url
-        # print(content)
         contentDict[index_num] = content
 
 

@@ -4,8 +4,8 @@ import Spimi
 import os
 import json
 
-def generate_ai_index():
 
+def generate_ai_index():
     print("Start crawling AI")
     # my_crawler.run()
     html_handler.run(PARAMETER.RAW_PATH_AI, PARAMETER.DATA_AI, PARAMETER.DICT_AI)

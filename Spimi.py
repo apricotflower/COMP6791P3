@@ -41,10 +41,19 @@ def spimi_invert(block_index):
             len_d = len(sorted_block_dict.items())
             for (key_2, value_2) in sorted_block_dict.items():
                 # key_2 = key_2.encode('unicode_escape')
-                if len_d == i:
-                    fo.write(key_2 + ":" + str(value_2))
-                else:
-                    fo.write(key_2 + ":" + str(value_2) + "\n")
+                if website_flag == PARAMETER.WEBSITE_CONCORDIA:
+                    if len_d == i:
+                        fo.write(key_2 + ":" + str(value_2))
+                    else:
+                        fo.write(key_2 + ":" + str(value_2) + "\n")
+                elif website_flag == PARAMETER.WEBSITE_AI:
+                    for ai_term in ai_filter_index:
+                        if key_2 in ai_term:
+                            if len_d == i:
+                                fo.write(key_2 + ":" + str(value_2))
+                            else:
+                                fo.write(key_2 + ":" + str(value_2) + "\n")
+                            break
                 i = i + 1
             print("Generate " + block_index +"BLOCK" + str(block_number) + " successfully!")
             block_number = block_number + 1
@@ -130,8 +139,20 @@ def generate_ai_df_index():
             line = fo.readline()
 
 
+def ai_filter():
+    global ai_filter_index
+    ai_filter_index = []
+    fo = open("LIST/ai.txt", encoding='utf8')
+    line = fo.readline()
+    while line:
+        ai_filter_index.append(line.strip("\n"))
+        line = fo.readline()
+
+
 def start_spimi(website,block_index, merge_block):
     global deal_all_document
+    global website_flag
+    website_flag = website
     # fo = open(PARAMETER.DATA)
     # deal_all_document = json.load(fo)
     if not os.path.exists(PARAMETER.TOKEN_NUMBER_PATH):
@@ -143,6 +164,7 @@ def start_spimi(website,block_index, merge_block):
             deal_all_document.update(json.load(fo))
         fo2 = open(PARAMETER.TOKEN_NUMBER_CONCORDIA, 'w')
     elif website == PARAMETER.WEBSITE_AI:
+        ai_filter()
         for file in os.listdir(PARAMETER.DATA_PATH_AI):
             fo = open(PARAMETER.DATA_PATH_AI + file)
             deal_all_document.update(json.load(fo))
